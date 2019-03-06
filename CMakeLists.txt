@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.13)
-project(repo C)
+project(ComputerVisionProject C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(repo main.c)
+#Can manually add the sources using the set command as follows:
+#set(SOURCES src/mainapp.cpp src/Student.cpp)
+
+#However, the file(GLOB...) allows for wildcard additions:
+file(GLOB SOURCES "src/*.c")
+
+add_executable(ComputerVisionProject ${SOURCES})
+
+target_link_libraries(ComputerVisionProject m freeimage)
