@@ -9,6 +9,10 @@ set(CMAKE_C_STANDARD 11)
 #However, the file(GLOB...) allows for wildcard additions:
 file(GLOB SOURCES "src/*.c")
 
-add_executable(ComputerVisionProject ${SOURCES})
+include_directories ("${PROJECT_SOURCE_DIR}/maxtree")
+add_subdirectory (src/maxtree)
 
-target_link_libraries(ComputerVisionProject m freeimage)
+#add_executable(ComputerVisionProject ${SOURCES})
+add_executable(ComputerVisionProject src/main.c)
+
+target_link_libraries(ComputerVisionProject m freeimage maxtree)
