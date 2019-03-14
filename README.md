@@ -21,6 +21,11 @@ http://vision.middlebury.edu/stereo/data/scenes2001/
 cmake --build <path-to-project>/cmake-build-debug --target ComputerVisionProject -- -j 2
 ```
 ## Maxtree info
+Images need to be grayscale. to convert use this command:
+```
+convert -colorspace GRAY <iamge>.ppm <image>.tiff
+```
+Options for maxtree calculation:
 ```
 Usage: ./cmake-build-debug/ComputerVisionProject <input image> <attrib> <lambda> [decision] [output image] [template]
 Where attrib is:
@@ -49,3 +54,4 @@ and decision is:
         2 - Max
         3 - Subtractive (default)
 ```
+convert -colorspace GRAY scene1.row3.col3.ppm scene1.row3.col3.tiff
