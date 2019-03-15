@@ -115,20 +115,24 @@ int filt_maxtree(int argc, char **argv)
     ImageGrayDelete(template);
     ImageGrayDelete(img);
     return(0);
-
 }
 
 int main(int argc, char *argv[])
 {
 //    filt_maxtree(argc, argv); // this would call the original maxtree3b.c functionality.
 
-    ImageGray *img_l, *img_r, *out;
-    MaxTree *mt;
+    ImageGray *img_l, *img_r, *template_l, *template_r, *out;
+    MaxTree *mt_l, *mt_r;
     char *img_l_fname = "src-images/left-img.pgm", *img_r_fname = "src-images/right-img.pgm", *outfname = "disp.pgm";
+    char *templatefname = NULL; // Don't know what this is for. NULL both for now...
     /*pointer to some read-only memory containing the string-literal.
      * will be slightly faster because the string does not have to be copied*/
     double lambda;
     int attrib, decision=3, r;
+
+    attrib = 12;// atoi(argv[2]);
+    lambda = 2;// atof(argv[3]);
+
     img_l = ImagePGMRead(img_l_fname);
     img_r = ImagePGMRead(img_r_fname);
     if (img_l==NULL || img_r==NULL)
@@ -136,14 +140,31 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Can't read src images '%s'\n");
         return(-1);
     }
+    template_l = GetTemplate(templatefname, img_l);
+    template_r = GetTemplate(templatefname, img_r);
+    if (template_l==NULL || template_r==NULL)
+    {
+        fprintf(stderr, "Can't create templates\n");
+        ImageGrayDelete(img_l);
+        ImageGrayDelete(img_r);
+        return(-1);
+    }
+
+    mt_l = MaxTreeCreate(img_l, template_l, Attribs[attrib].NewAuxData, Attribs[attrib].AddToAuxData, Attribs[attrib].MergeAuxData, Attribs[attrib].DeleteAuxData);
+    mt_r = MaxTreeCreate(img_r, template_r, Attribs[attrib].NewAuxData, Attribs[attrib].AddToAuxData, Attribs[attrib].MergeAuxData, Attribs[attrib].DeleteAuxData);
 
     out = ImageGrayCreate(img_l->Width, img_l->Height);
     *out->Pixmap = *img_l->Pixmap;
-//    MaxTreeDelete(mt);
+    MaxTreeDelete(mt_l);
+    MaxTreeDelete(mt_r);
     r = ImagePGMBinWrite(out, outfname);
+
+    // free memory
     ImageGrayDelete(out);
     ImageGrayDelete(img_l);
     ImageGrayDelete(img_r);
+    ImageGrayDelete(template_l);
+    ImageGrayDelete(template_r);
 
     return (0);
 } /* main */
