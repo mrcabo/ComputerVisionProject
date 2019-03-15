@@ -1,14 +1,9 @@
 //
 // Created by diego on 13/03/19.
 //
-//#include <stdio.h>
-//
-// int main() {
-//    printf("Hello, World!\n");
-//    return 0;
-// }
 
 #include "maxtree3b.h"
+#include "calculatedisp.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +17,6 @@ DecisionStruct Decisions[NUMDECISIONS] =
                 {"Max", MaxTreeFilterMax},
                 {"Subtractive", MaxTreeFilterSubtractive},
         };
-
 AttribStruct Attribs[NUMATTR] =
         {
                 {"Area", NewAreaData, DeleteAreaData, AddToAreaData, MergeAreaData, AreaAttribute},
@@ -46,7 +40,7 @@ AttribStruct Attribs[NUMATTR] =
                 {"Gray level", NewLevelData, DeleteLevelData, AddToLevelData, MergeLevelData, LevelAttribute}
         };
 
-int main(int argc, char *argv[])
+int filt_maxtree(int argc, char **argv)
 {
     ImageGray *img, *template, *out;
     MaxTree *mt;
@@ -121,4 +115,35 @@ int main(int argc, char *argv[])
     ImageGrayDelete(template);
     ImageGrayDelete(img);
     return(0);
+
+}
+
+int main(int argc, char *argv[])
+{
+//    filt_maxtree(argc, argv); // this would call the original maxtree3b.c functionality.
+
+    ImageGray *img_l, *img_r, *out;
+    MaxTree *mt;
+    char *img_l_fname = "src-images/left-img.pgm", *img_r_fname = "src-images/right-img.pgm", *outfname = "disp.pgm";
+    /*pointer to some read-only memory containing the string-literal.
+     * will be slightly faster because the string does not have to be copied*/
+    double lambda;
+    int attrib, decision=3, r;
+    img_l = ImagePGMRead(img_l_fname);
+    img_r = ImagePGMRead(img_r_fname);
+    if (img_l==NULL || img_r==NULL)
+    {
+        fprintf(stderr, "Can't read src images '%s'\n");
+        return(-1);
+    }
+
+    out = ImageGrayCreate(img_l->Width, img_l->Height);
+    *out->Pixmap = *img_l->Pixmap;
+//    MaxTreeDelete(mt);
+    r = ImagePGMBinWrite(out, outfname);
+    ImageGrayDelete(out);
+    ImageGrayDelete(img_l);
+    ImageGrayDelete(img_r);
+
+    return (0);
 } /* main */

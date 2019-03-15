@@ -23,7 +23,7 @@ cmake --build <path-to-project>/cmake-build-debug --target ComputerVisionProject
 ## Maxtree info
 Images need to be grayscale. to convert use this command:
 ```
-convert -colorspace GRAY <iamge>.ppm <image>.tiff
+convert -colorspace GRAY <image>.ppm <image>.pgm
 ```
 Options for maxtree calculation:
 ```
