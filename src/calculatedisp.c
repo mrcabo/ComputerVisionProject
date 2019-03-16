@@ -7,15 +7,13 @@
 
 
 // TODO: maybe filter the tree before comparing both?
-//DecisionStruct Decisions[NUMDECISIONS] =
-//        {
+//DecisionStruct Decisions[NUMDECISIONS] = {
 //                {"Min", MaxTreeFilterMin},
 //                {"Direct", MaxTreeFilterDirect},
 //                {"Max", MaxTreeFilterMax},
 //                {"Subtractive", MaxTreeFilterSubtractive},
 //        };
-AttribStruct Attribs[NUMATTR] =
-        {
+AttribStruct Attribs[NUMATTR] = {
                 {"Area", NewAreaData, DeleteAreaData, AddToAreaData, MergeAreaData, AreaAttribute},
                 {"Area of min. enclosing rectangle", NewEnclRectData, DeleteEnclRectData, AddToEnclRectData, MergeEnclRectData, EnclRectAreaAttribute},
                 {"Square of diagonal of min. enclosing rectangle", NewEnclRectData, DeleteEnclRectData, AddToEnclRectData, MergeEnclRectData, EnclRectDiagAttribute},
@@ -39,8 +37,7 @@ AttribStruct Attribs[NUMATTR] =
 
 // TODO: is this struct necessary?
 typedef struct SimilarNodes SimilarNodes;
-struct SimilarNodes
-{
+struct SimilarNodes {
     MaxNode *NodesL;
     MaxNode *NodesR;
     int IdxSimilarNodes;
@@ -51,14 +48,12 @@ void compare_trees(MaxTree *mt_l, MaxTree *mt_r) {
 
 }
 
-ImageGray *calc_disp(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, ImageGray *template_r, int attrib)
-{
+ImageGray *calc_disp(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, ImageGray *template_r, int attrib) {
     ImageGray *out;
     MaxTree *mt_l, *mt_r;
     ulong imgsize = img_l->Height*img_l->Width;
     out = ImageGrayCreate(img_l->Width, img_l->Height);
-    if (out==NULL)
-    {
+    if (out==NULL) {
         fprintf(stderr, "Can't create output image\n");
         ImageGrayDelete(img_l);
         ImageGrayDelete(img_r);
@@ -67,8 +62,7 @@ ImageGray *calc_disp(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, 
         return(NULL);
     }
     mt_l = MaxTreeCreate(img_l, template_l, Attribs[attrib].NewAuxData, Attribs[attrib].AddToAuxData, Attribs[attrib].MergeAuxData, Attribs[attrib].DeleteAuxData);
-    if (mt_l==NULL)
-    {
+    if (mt_l==NULL) {
         fprintf(stderr, "Can't create Max-tree\n");
         ImageGrayDelete(out);
         ImageGrayDelete(img_l);
@@ -78,8 +72,7 @@ ImageGray *calc_disp(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, 
         return(NULL);
     }
     mt_r = MaxTreeCreate(img_r, template_r, Attribs[attrib].NewAuxData, Attribs[attrib].AddToAuxData, Attribs[attrib].MergeAuxData, Attribs[attrib].DeleteAuxData);
-    if (mt_r==NULL)
-    {
+    if (mt_r==NULL) {
         fprintf(stderr, "Can't create Max-tree\n");
         ImageGrayDelete(out);
         ImageGrayDelete(img_l);

@@ -10,8 +10,7 @@
 #include <string.h>
 
 //
-//int filt_maxtree(int argc, char **argv)
-//{
+//int filt_maxtree(int argc, char **argv) {
 //    ImageGray *img, *template, *out;
 //    MaxTree *mt;
 //    char *imgfname, *templatefname = NULL, *outfname = "out.pgm";
@@ -87,8 +86,7 @@
 //    return(0);
 //}
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 //    filt_maxtree(argc, argv); // this would call the original maxtree3b.c functionality.
 
     ImageGray *img_l, *img_r, *template_l, *template_r, *out;
@@ -103,20 +101,18 @@ int main(int argc, char *argv[])
     lambda = 2;// atof(argv[3]);
 
     img_l = ImagePGMRead(img_l_fname);
-    if (img_l==NULL)
-    {
+    if (img_l==NULL) {
         fprintf(stderr, "Can't read src images '%s'\n", img_l_fname);
         return(-1);
     }
     img_r = ImagePGMRead(img_r_fname);
-    if (img_r==NULL)
-    {
+    if (img_r==NULL) {
         fprintf(stderr, "Can't read src images '%s'\n", img_r_fname);
         ImageGrayDelete(img_l);
         return(-1);
     }
 
-    if (img_l->Width!=img_r->Width || img_l->Height!=img_r->Height){
+    if (img_l->Width!=img_r->Width || img_l->Height!=img_r->Height) {
         fprintf(stderr, "Left and right images are not the same size\n");
         ImageGrayDelete(img_l);
         ImageGrayDelete(img_r);
@@ -124,8 +120,7 @@ int main(int argc, char *argv[])
     }
     template_l = GetTemplate(templatefname, img_l);
     template_r = GetTemplate(templatefname, img_r);
-    if (template_l==NULL || template_r==NULL)
-    {
+    if (template_l==NULL || template_r==NULL) {
         fprintf(stderr, "Can't create templates\n");
         ImageGrayDelete(img_l);
         ImageGrayDelete(img_r);
