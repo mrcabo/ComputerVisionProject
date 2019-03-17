@@ -5,6 +5,7 @@
 #ifndef COMPUTERVISIONPROJECT_MAXTREE3B_H
 #define COMPUTERVISIONPROJECT_MAXTREE3B_H
 
+#define NUMLEVELS     256
 #define NUMDECISIONS 4
 #define NUMATTR 19
 
@@ -58,6 +59,13 @@ struct AttribStruct
     void (*AddToAuxData)(void *, ulong, ulong, int, ulong *, ImageGray *);
     void (*MergeAuxData)(void *, void *);
     double (*Attribute)(void *);
+};
+
+typedef struct InertiaData InertiaData;
+struct InertiaData
+{
+    ulong Area;
+    double SumX, SumY, SumX2, SumY2;
 };
 
 ImageGray *ImagePGMRead(char *fname);

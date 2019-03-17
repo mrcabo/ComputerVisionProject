@@ -127,10 +127,17 @@ int main(int argc, char *argv[]) {
         return(-1);
     }
 
-//    out = calc_disp(img_l, img_r, template_l, template_r, attrib);
+    out = calc_disp(img_l, img_r, template_l, template_r, attrib);
+    if (out==NULL) {
+        fprintf(stderr, "Can't create output image\n");
+        ImageGrayDelete(img_l);
+        ImageGrayDelete(img_r);
+        ImageGrayDelete(template_l);
+        ImageGrayDelete(template_r);
+        return(-1);
+    }
 
-    *out->Pixmap = *img_l->Pixmap;
-
+    memcpy(out->Pixmap, img_l->Pixmap, sizeof(ubyte)*img_l->Width*img_l->Height);
     r = ImagePGMBinWrite(out, outfname);
     // free memory
     ImageGrayDelete(out);

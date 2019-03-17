@@ -44,48 +44,63 @@ struct SimilarNodes {
 };
 
 // TODO: keep thinking what the return value should be.. Probably
-void compare_trees(MaxTree *mt_l, MaxTree *mt_r) {
+void compare_trees(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l) {
+    MaxNode *node_l, *node_r;
+    ulong imgsize = img_l->Height*img_l->Width;
+    ulong nrows = img_l->Height, ncols = img_l->Width;
+    ulong r, c, p, idx;
 
+    int num_nodes = 0;
+    for (int l = 0; l < NUMLEVELS; ++l) {
+        num_nodes += mt_l->NumNodesAtLevel[l];
+    }
+
+    for (r = 0; r < nrows; ++r) {
+        for (c = 0; c < ncols; ++c) {
+            p = r*ncols + c;
+            idx = mt_l->NumPixelsBelowLevel[img_l->Pixmap[p]] + mt_l->Status[p];
+            node_l = &(mt_l->Nodes[idx]);
+            node_r = &(mt_r->Nodes[idx]);
+
+            //Could I say this...?
+            InertiaData *inertiadata = node_l->Attribute;
+            double area = inertiadata->Area;
+            double x = inertiadata->SumX;
+            double x2 = inertiadata->SumX2;
+//            mt_l->Nodes->Attribute
+//            Attribs[12].Attribute()
+
+        }
+    }
 }
 
 ImageGray *calc_disp(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, ImageGray *template_r, int attrib) {
     ImageGray *out;
     MaxTree *mt_l, *mt_r;
-    ulong imgsize = img_l->Height*img_l->Width;
-    out = ImageGrayCreate(img_l->Width, img_l->Height);
-    if (out==NULL) {
-        fprintf(stderr, "Can't create output image\n");
-        ImageGrayDelete(img_l);
-        ImageGrayDelete(img_r);
-        ImageGrayDelete(template_l);
-        ImageGrayDelete(template_r);
-        return(NULL);
-    }
     mt_l = MaxTreeCreate(img_l, template_l, Attribs[attrib].NewAuxData, Attribs[attrib].AddToAuxData, Attribs[attrib].MergeAuxData, Attribs[attrib].DeleteAuxData);
     if (mt_l==NULL) {
-        fprintf(stderr, "Can't create Max-tree\n");
-        ImageGrayDelete(out);
-        ImageGrayDelete(img_l);
-        ImageGrayDelete(img_r);
-        ImageGrayDelete(template_l);
-        ImageGrayDelete(template_r);
+        fprintf(stderr, "Can't create left Max-tree\n");
         return(NULL);
     }
     mt_r = MaxTreeCreate(img_r, template_r, Attribs[attrib].NewAuxData, Attribs[attrib].AddToAuxData, Attribs[attrib].MergeAuxData, Attribs[attrib].DeleteAuxData);
     if (mt_r==NULL) {
-        fprintf(stderr, "Can't create Max-tree\n");
-        ImageGrayDelete(out);
-        ImageGrayDelete(img_l);
-        ImageGrayDelete(img_r);
-        ImageGrayDelete(template_l);
-        ImageGrayDelete(template_r);
+        fprintf(stderr, "Can't create right Max-tree\n");
+        MaxTreeDelete(mt_l);
         return(NULL);
     }
 
-    int del = compare_trees(mt_l, mt_r);
+//    Decisions[2].Filter(mt_l, img_l, template_l, out, Attribs[attrib].Attribute, 2); // to check how they filer and use the nodes
+
+    compare_trees(mt_l, mt_r, img_l);
 
     MaxTreeDelete(mt_l);
     MaxTreeDelete(mt_r);
+
+    out = ImageGrayCreate(img_l->Width, img_l->Height);
+    if (out==NULL) {
+        fprintf(stderr, "Can't create output image\n");
+        return(NULL);
+    }
     return (out);
 }
 

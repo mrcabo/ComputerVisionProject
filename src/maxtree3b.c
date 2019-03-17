@@ -41,7 +41,6 @@
 
 
 
-#define NUMLEVELS     256
 #define CONNECTIVITY  4
 #define PI 3.14159265358979323846
 
@@ -586,11 +585,11 @@ double PeriSmallCompactnessAttribute(void *periattr)
 
 /****** Typedefs and functions for moment of inertia attributes **************************/
 
-typedef struct InertiaData
-{
-   ulong Area;
-   double SumX, SumY, SumX2, SumY2;
-} InertiaData;
+//typedef struct InertiaData
+//{
+//   ulong Area;
+//   double SumX, SumY, SumX2, SumY2;
+//} InertiaData;
 
 void *NewInertiaData(ulong x, ulong y, int numneighbors, ulong *neighbors, ImageGray *img)
 {
