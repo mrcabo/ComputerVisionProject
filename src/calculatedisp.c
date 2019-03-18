@@ -44,7 +44,8 @@ struct SimilarNodes {
 };
 
 // TODO: keep thinking what the return value should be.. Probably
-void compare_trees(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l, const ImageGray *img_r, double (*attribute)(void *)) {
+int calc_disp(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l, const ImageGray *img_r, ImageGray *out,
+              double (*attribute)(void *)) {
     MaxNode *node_l, *node_r;
     ulong imgsize = img_l->Height*img_l->Width;
     ulong nrows = img_l->Height, ncols = img_l->Width;
@@ -52,6 +53,8 @@ void compare_trees(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *im
     for (int l = 0; l < NUMLEVELS; ++l) {
         num_nodes += mt_l->NumNodesAtLevel[l];
     }
+
+    ImageGrayInit(out, (ubyte) 0); // set image to 0 (all black)
 
     // Not sure about this because it's going pixel by pixel. Gotta try to do it node by node.
     for (ulong r = 0; r < nrows; ++r) {
@@ -74,14 +77,31 @@ void compare_trees(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *im
 
                 if (value_l == value_r){
                     // do something..
+                    out->Pixmap[pix_l] = (ubyte) (sumX_l-sumX_r);
                     break;
                 }
             }
         }
     }
+
+//    // Problem with this is I would have to search the whole tree...
+//    for (int l = 0; l < NUMLEVELS; ++l) {
+//        for (ulong i = 0; i < mt_l->NumNodesAtLevel[l]; ++i) {
+//            ulong idx = mt_l->NumPixelsBelowLevel[l] + i;
+//            node_l = &(mt_l->Nodes[idx]);
+//            ulong parent = node_l->Parent; // why..?
+//
+//
+////            if (idx!=parent){
+////                if ((*attribute)(node->Attribute) < lambda)  node->NewLevel = mt_l->Nodes[parent].NewLevel;
+////                else  node->NewLevel = node->Level;
+////            }
+//        }
+//    }
+return (0);
 }
 
-ImageGray *calc_disp(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, ImageGray *template_r, int attrib) {
+ImageGray *create_disp_img(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, ImageGray *template_r, int attrib) {
     ImageGray *out;
     MaxTree *mt_l, *mt_r;
     mt_l = MaxTreeCreate(img_l, template_l, Attribs[attrib].NewAuxData, Attribs[attrib].AddToAuxData, Attribs[attrib].MergeAuxData, Attribs[attrib].DeleteAuxData);
@@ -97,17 +117,24 @@ ImageGray *calc_disp(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, 
     }
 
 //    Decisions[2].Filter(mt_l, img_l, template_l, out, Attribs[attrib].Attribute, 2); // to check how they filer and use the nodes
-
-    compare_trees(mt_l, mt_r, img_l, img_r, Attribs[attrib].Attribute);
-
-    MaxTreeDelete(mt_l);
-    MaxTreeDelete(mt_r);
-
     out = ImageGrayCreate(img_l->Width, img_l->Height);
     if (out==NULL) {
         fprintf(stderr, "Can't create output image\n");
+        MaxTreeDelete(mt_l);
+        MaxTreeDelete(mt_r);
         return(NULL);
     }
+
+    int st = calc_disp(mt_l, mt_r, img_l, img_r, out, Attribs[attrib].Attribute);
+    if (st!=0) {
+        fprintf(stderr, "Error calculating disparity\n");
+        MaxTreeDelete(mt_l);
+        MaxTreeDelete(mt_r);
+        return(NULL);
+    }
+    MaxTreeDelete(mt_l);
+    MaxTreeDelete(mt_r);
+
     return (out);
 }
 

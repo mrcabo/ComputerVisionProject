@@ -76,6 +76,7 @@ ImageGray *ImagePGMRead(char *fname);
 ImageGray *GetTemplate(char *templatefname, ImageGray *img);
 void ImageGrayDelete(ImageGray *img);
 ImageGray *ImageGrayCreate(ulong width, ulong height);
+void ImageGrayInit(ImageGray *img, ubyte h);
 MaxTree *MaxTreeCreate(ImageGray *img, ImageGray *template,
                        void *(*newauxdata)(ulong, ulong, int, ulong *, ImageGray *),
                        void (*addtoauxdata)(void *, ulong, ulong, int, ulong *, ImageGray *),

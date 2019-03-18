@@ -94,11 +94,11 @@ int main(int argc, char *argv[]) {
     char *templatefname = NULL; // Don't know what this is for. NULL both for now...
     /*pointer to some read-only memory containing the string-literal.
      * will be slightly faster because the string does not have to be copied*/
-    double lambda;
-    int attrib, decision=3, r;
+//    double lambda;
+    int attrib;// , decision=3; if we decide to filter tree
 
     attrib = 12;// atoi(argv[2]);
-    lambda = 2;// atof(argv[3]);
+//    lambda = 2;// atof(argv[3]);
 
     img_l = ImagePGMRead(img_l_fname);
     if (img_l==NULL) {
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
         return(-1);
     }
 
-    out = calc_disp(img_l, img_r, template_l, template_r, attrib);
+    out = create_disp_img(img_l, img_r, template_l, template_r, attrib);
     if (out==NULL) {
         fprintf(stderr, "Can't create output image\n");
         ImageGrayDelete(img_l);
@@ -137,8 +137,16 @@ int main(int argc, char *argv[]) {
         return(-1);
     }
 
-    memcpy(out->Pixmap, img_l->Pixmap, sizeof(ubyte)*img_l->Width*img_l->Height);
-    r = ImagePGMBinWrite(out, outfname);
+//    memcpy(out->Pixmap, img_l->Pixmap, sizeof(ubyte)*img_l->Width*img_l->Height);
+
+    int r = ImagePGMBinWrite(out, outfname);
+    if (r) {
+        fprintf(stderr, "Error writing image '%s'\n", outfname);
+    }
+    else {
+        printf("Disparity image written to '%s'\n", outfname);
+    }
+
     // free memory
     ImageGrayDelete(out);
     ImageGrayDelete(img_l);
