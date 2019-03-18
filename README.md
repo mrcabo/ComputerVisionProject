@@ -54,4 +54,3 @@ and decision is:
         2 - Max
         3 - Subtractive (default)
 ```
-convert -colorspace GRAY scene1.row3.col3.ppm scene1.row3.col3.tiff

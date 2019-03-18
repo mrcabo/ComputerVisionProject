@@ -44,10 +44,6 @@
 #define CONNECTIVITY  4
 #define PI 3.14159265358979323846
 
-typedef short bool;
-#define false 0
-#define true  1
-
 #define MIN(a,b)  ((a<=b) ? (a) : (b))
 #define MAX(a,b)  ((a>=b) ? (a) : (b))
 

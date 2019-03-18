@@ -4,15 +4,15 @@
 
 #include "calculatedisp.h"
 #include <stdio.h>
-
+#include <limits.h>
 
 // TODO: maybe filter the tree before comparing both?
-//DecisionStruct Decisions[NUMDECISIONS] = {
-//                {"Min", MaxTreeFilterMin},
-//                {"Direct", MaxTreeFilterDirect},
-//                {"Max", MaxTreeFilterMax},
-//                {"Subtractive", MaxTreeFilterSubtractive},
-//        };
+DecisionStruct Decisions[NUMDECISIONS] = {
+                {"Min", MaxTreeFilterMin},
+                {"Direct", MaxTreeFilterDirect},
+                {"Max", MaxTreeFilterMax},
+                {"Subtractive", MaxTreeFilterSubtractive},
+        };
 AttribStruct Attribs[NUMATTR] = {
                 {"Area", NewAreaData, DeleteAreaData, AddToAreaData, MergeAreaData, AreaAttribute},
                 {"Area of min. enclosing rectangle", NewEnclRectData, DeleteEnclRectData, AddToEnclRectData, MergeEnclRectData, EnclRectAreaAttribute},
@@ -44,32 +44,39 @@ struct SimilarNodes {
 };
 
 // TODO: keep thinking what the return value should be.. Probably
-void compare_trees(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l) {
+void compare_trees(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l, const ImageGray *img_r, double (*attribute)(void *)) {
     MaxNode *node_l, *node_r;
     ulong imgsize = img_l->Height*img_l->Width;
     ulong nrows = img_l->Height, ncols = img_l->Width;
-    ulong r, c, p, idx;
-
     int num_nodes = 0;
     for (int l = 0; l < NUMLEVELS; ++l) {
         num_nodes += mt_l->NumNodesAtLevel[l];
     }
 
-    for (r = 0; r < nrows; ++r) {
-        for (c = 0; c < ncols; ++c) {
-            p = r*ncols + c;
-            idx = mt_l->NumPixelsBelowLevel[img_l->Pixmap[p]] + mt_l->Status[p];
+    // Not sure about this because it's going pixel by pixel. Gotta try to do it node by node.
+    for (ulong r = 0; r < nrows; ++r) {
+        for (ulong col_l = 0; col_l < ncols; ++col_l) {
+            ulong pix_l = r*ncols + col_l;
+            ulong idx = mt_l->NumPixelsBelowLevel[img_l->Pixmap[pix_l]] + mt_l->Status[pix_l];
             node_l = &(mt_l->Nodes[idx]);
-            node_r = &(mt_r->Nodes[idx]);
+            InertiaData *inertiadata_l = node_l->Attribute;
+            double value_l = (*attribute)(node_l->Attribute);
+            double sumX_l = inertiadata_l->SumX;
 
-            //Could I say this...?
-            InertiaData *inertiadata = node_l->Attribute;
-            double area = inertiadata->Area;
-            double x = inertiadata->SumX;
-            double x2 = inertiadata->SumX2;
-//            mt_l->Nodes->Attribute
-//            Attribs[12].Attribute()
+            // Find the equivalent node along the current row
+            for (ulong col_r = col_l; col_r < ULONG_MAX; --col_r) { // swipe epipolar line to the left only
+                ulong pix_r = r*ncols + col_r;
+                ulong idx = mt_r->NumPixelsBelowLevel[img_r->Pixmap[pix_r]] + mt_r->Status[pix_r];
+                node_r = &(mt_r->Nodes[idx]);
+                InertiaData *inertiadata_r = node_r->Attribute;
+                double value_r = (*attribute)(node_r->Attribute);
+                double sumX_r = inertiadata_r->SumX;
 
+                if (value_l == value_r){
+                    // do something..
+                    break;
+                }
+            }
         }
     }
 }
@@ -91,7 +98,7 @@ ImageGray *calc_disp(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, 
 
 //    Decisions[2].Filter(mt_l, img_l, template_l, out, Attribs[attrib].Attribute, 2); // to check how they filer and use the nodes
 
-    compare_trees(mt_l, mt_r, img_l);
+    compare_trees(mt_l, mt_r, img_l, img_r, Attribs[attrib].Attribute);
 
     MaxTreeDelete(mt_l);
     MaxTreeDelete(mt_r);

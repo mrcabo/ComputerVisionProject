@@ -9,6 +9,10 @@
 #define NUMDECISIONS 4
 #define NUMATTR 19
 
+typedef short bool;
+#define false 0
+#define true  1
+
 typedef unsigned char ubyte;
 typedef unsigned int uint;
 typedef unsigned long ulong;
