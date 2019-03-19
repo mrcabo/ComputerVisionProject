@@ -5,6 +5,7 @@
 #include "calculatedisp.h"
 #include <stdio.h>
 #include <limits.h>
+#include <math.h>
 
 // TODO: maybe filter the tree before comparing both?
 DecisionStruct Decisions[NUMDECISIONS] = {
@@ -43,6 +44,10 @@ struct SimilarNodes {
     int IdxSimilarNodes;
 };
 
+bool is_in_range(double ref_val, double new_val, double margin) {
+    return ((fabs(ref_val-new_val) <= margin) ? true : false);
+}
+
 // TODO: keep thinking what the return value should be.. Probably
 int calc_disp(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l, const ImageGray *img_r, ImageGray *out,
               double (*attribute)(void *)) {
@@ -74,9 +79,9 @@ int calc_disp(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l, 
                 InertiaData *inertiadata_r = node_r->Attribute;
                 double value_r = (*attribute)(node_r->Attribute);
                 double sumX_r = inertiadata_r->SumX;
+                double margin = 0.001;
 
-                if (value_l == value_r){
-                    // do something..
+                if (is_in_range(value_l, value_r, margin)) {
                     out->Pixmap[pix_l] = (ubyte) (sumX_l-sumX_r);
                     break;
                 }
