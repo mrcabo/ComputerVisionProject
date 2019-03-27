@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <math.h>
+#include <stdlib.h>
 
 // TODO: maybe filter the tree before comparing both?
 DecisionStruct Decisions[NUMDECISIONS] = {
@@ -36,22 +37,60 @@ AttribStruct Attribs[NUMATTR] = {
                 {"Gray level", NewLevelData, DeleteLevelData, AddToLevelData, MergeLevelData, LevelAttribute}
         };
 
-// TODO: is this struct necessary?
-typedef struct SimilarNodes SimilarNodes;
-struct SimilarNodes {
-    MaxNode *NodesL;
-    MaxNode *NodesR;
-    int IdxSimilarNodes;
+typedef struct DispNodeAux DispNodeAux;
+struct DispNodeAux {  // Same indexation as with MaxNodes
+    double *attr_diff;  // difference between attribute values of node_l and node_r
+    double *disparity;  // Disparity for specific node
+
+    // TODO: Couldn't think of a better way to know if attr_diff is zero because of calloc or because it's found a perfect match
+    bool *is_set;
 };
+
+DispNodeAux *DispNodeAuxCreate(ulong imgsize)
+{
+    DispNodeAux *aux;
+    /* Allocate structures */
+    aux = malloc(sizeof(DispNodeAux));
+    if (aux==NULL)
+        return(NULL);
+    aux->attr_diff = calloc((size_t)imgsize, sizeof(double));
+    if (aux->attr_diff==NULL) {
+        free(aux);
+        return(NULL);
+    }
+    aux->disparity = calloc((size_t)imgsize, sizeof(double));
+    if (aux->disparity==NULL) {
+        free(aux->attr_diff);
+        free(aux);
+        return(NULL);
+    }
+    aux->is_set = calloc((size_t)imgsize, sizeof(bool));
+    if (aux->is_set==NULL) {
+        free(aux->attr_diff);
+        free(aux->disparity);
+        free(aux);
+        return(NULL);
+    }
+    return(aux);
+} /* DispNodeAuxCreate */
+
+void DispNodeAuxDelete(DispNodeAux *aux)
+{
+    free(aux->attr_diff);
+    free(aux->disparity);
+    free(aux->is_set);
+    free(aux);
+} /* DispNodeAuxDelete */
 
 bool is_in_range(double ref_val, double new_val, double margin) {
     return ((fabs(ref_val-new_val) <= margin) ? true : false);
 }
 
-// TODO: keep thinking what the return value should be.. Probably
+// TODO: keep thinking what the return value should be.. Probably return pointer to out
 int calc_disp(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l, const ImageGray *img_r, ImageGray *out,
               double (*attribute)(void *)) {
     MaxNode *node_l, *node_r;
+    DispNodeAux *disp_aux;
     ulong imgsize = img_l->Height*img_l->Width;
     ulong nrows = img_l->Height, ncols = img_l->Width;
     int num_nodes = 0;
@@ -59,51 +98,52 @@ int calc_disp(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l, 
         num_nodes += mt_l->NumNodesAtLevel[l];
     }
 
+    // TODO: maybe not necessary to reset image...
     ImageGrayInit(out, (ubyte) 0); // set image to 0 (all black)
 
-    // Not sure about this because it's going pixel by pixel. Gotta try to do it node by node.
+    disp_aux = DispNodeAuxCreate(imgsize);
+    if (disp_aux==NULL) {
+        return (-1);
+    }
     for (ulong r = 0; r < nrows; ++r) {
         for (ulong col_l = 0; col_l < ncols; ++col_l) {
             ulong pix_l = r*ncols + col_l;
-            ulong idx = mt_l->NumPixelsBelowLevel[img_l->Pixmap[pix_l]] + mt_l->Status[pix_l];
-            node_l = &(mt_l->Nodes[idx]);
+            ulong idx_l = mt_l->NumPixelsBelowLevel[img_l->Pixmap[pix_l]] + mt_l->Status[pix_l];
+            node_l = &(mt_l->Nodes[idx_l]);
             InertiaData *inertiadata_l = node_l->Attribute;
             double value_l = (*attribute)(node_l->Attribute);
-            double sumX_l = inertiadata_l->SumX;
 
             // Find the equivalent node along the current row
             for (ulong col_r = col_l; col_r < ULONG_MAX; --col_r) { // swipe epipolar line to the left only
                 ulong pix_r = r*ncols + col_r;
-                ulong idx = mt_r->NumPixelsBelowLevel[img_r->Pixmap[pix_r]] + mt_r->Status[pix_r];
-                node_r = &(mt_r->Nodes[idx]);
+                ulong idx_r = mt_r->NumPixelsBelowLevel[img_r->Pixmap[pix_r]] + mt_r->Status[pix_r];
+                node_r = &(mt_r->Nodes[idx_r]);
                 InertiaData *inertiadata_r = node_r->Attribute;
                 double value_r = (*attribute)(node_r->Attribute);
-                double sumX_r = inertiadata_r->SumX;
-                double margin = 0.001;
 
-                if (is_in_range(value_l, value_r, margin)) {
-                    out->Pixmap[pix_l] = (ubyte) (sumX_l-sumX_r);
-                    break;
+                double diff_value = fabs(value_l-value_r);
+                if (!disp_aux->is_set[idx_l] || (diff_value < disp_aux->attr_diff[idx_l])) {
+                    disp_aux->is_set[idx_l] = true;
+                    disp_aux->attr_diff[idx_l] = diff_value;
+                    double disparity = (inertiadata_l->SumX / inertiadata_l->Area) - (inertiadata_r->SumX / inertiadata_r->Area);
+                    // TODO: Check if this makes worse/better results (looks better tho..)
+//                    if (disparity < 0)
+//                        disparity = col_l - col_r;
+//                    disp_aux->disparity[idx_l] = disparity;
+
+                    // disparities should be positive. If it found a wrong match to the right, set it to 0..
+                    disp_aux->disparity[idx_l] = (disparity > 0) ? disparity : 0;
                 }
             }
         }
     }
+    for (ulong i = 0; i<imgsize; ++i) {
+        ulong idx_l = mt_l->NumPixelsBelowLevel[img_l->Pixmap[i]] + mt_l->Status[i];
+        out->Pixmap[i] = (ubyte) disp_aux->disparity[idx_l];
+    }
 
-//    // Problem with this is I would have to search the whole tree...
-//    for (int l = 0; l < NUMLEVELS; ++l) {
-//        for (ulong i = 0; i < mt_l->NumNodesAtLevel[l]; ++i) {
-//            ulong idx = mt_l->NumPixelsBelowLevel[l] + i;
-//            node_l = &(mt_l->Nodes[idx]);
-//            ulong parent = node_l->Parent; // why..?
-//
-//
-////            if (idx!=parent){
-////                if ((*attribute)(node->Attribute) < lambda)  node->NewLevel = mt_l->Nodes[parent].NewLevel;
-////                else  node->NewLevel = node->Level;
-////            }
-//        }
-//    }
-return (0);
+    DispNodeAuxDelete(disp_aux);
+    return (0);
 }
 
 ImageGray *create_disp_img(ImageGray *img_l, ImageGray *img_r, ImageGray *template_l, ImageGray *template_r, int attrib) {
@@ -121,7 +161,6 @@ ImageGray *create_disp_img(ImageGray *img_l, ImageGray *img_r, ImageGray *templa
         return(NULL);
     }
 
-//    Decisions[2].Filter(mt_l, img_l, template_l, out, Attribs[attrib].Attribute, 2); // to check how they filer and use the nodes
     out = ImageGrayCreate(img_l->Width, img_l->Height);
     if (out==NULL) {
         fprintf(stderr, "Can't create output image\n");
@@ -129,6 +168,8 @@ ImageGray *create_disp_img(ImageGray *img_l, ImageGray *img_r, ImageGray *templa
         MaxTreeDelete(mt_r);
         return(NULL);
     }
+
+//    Decisions[3].Filter(mt_l, img_l, template_l, out, Attribs[attrib].Attribute, 1.2); // to check how they filer and use the nodes
 
     int st = calc_disp(mt_l, mt_r, img_l, img_r, out, Attribs[attrib].Attribute);
     if (st!=0) {
