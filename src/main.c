@@ -95,9 +95,7 @@ int main(int argc, char *argv[]) {
     /*pointer to some read-only memory containing the string-literal.
      * will be slightly faster because the string does not have to be copied*/
 //    double lambda;
-    int attrib;// , decision=3; if we decide to filter tree
-
-    attrib = 12;// atoi(argv[2]);
+    int attrib = 12;// , decision=3; if we decide to filter tree
 //    lambda = 2;// atof(argv[3]);
 
     img_l = ImagePGMRead(img_l_fname);
