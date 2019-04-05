@@ -89,8 +89,13 @@
 int main(int argc, char *argv[]) {
 //    filt_maxtree(argc, argv); // this would call the original maxtree3b.c functionality.
 
-    ImageGray *img_l, *img_r, *template_l, *template_r, *out;
-    char *img_l_fname = "src-images/left-img.pgm", *img_r_fname = "src-images/right-img.pgm", *outfname = "disp.pgm";
+    ImageGray *img_l, *img_r, *template_l, *template_r, *disp, *gt, *comp;
+    char *img_l_fname = "src-images/left-img.pgm";
+    char *img_r_fname = "src-images/right-img.pgm";
+    char *gt_fname = "src-images/ground-truth.pgm";
+    char *disp_fname = "disp.pgm";
+    char *comp_fname = "comp.pgm";
+
     char *templatefname = NULL; // Don't know what this is for. NULL both for now...
     /*pointer to some read-only memory containing the string-literal.
      * will be slightly faster because the string does not have to be copied*/
@@ -125,8 +130,8 @@ int main(int argc, char *argv[]) {
         return(-1);
     }
 
-    out = create_disp_img(img_l, img_r, template_l, template_r, attrib);
-    if (out==NULL) {
+    disp = create_disp_img(img_l, img_r, template_l, template_r, attrib);
+    if (disp==NULL) {
         fprintf(stderr, "Can't create output image\n");
         ImageGrayDelete(img_l);
         ImageGrayDelete(img_r);
@@ -135,18 +140,48 @@ int main(int argc, char *argv[]) {
         return(-1);
     }
 
-//    memcpy(out->Pixmap, img_l->Pixmap, sizeof(ubyte)*img_l->Width*img_l->Height);
+//    memcpy(disp->Pixmap, img_l->Pixmap, sizeof(ubyte)*img_l->Width*img_l->Height);
 
-    int r = ImagePGMBinWrite(out, outfname);
+    int r = ImagePGMBinWrite(disp, disp_fname);
     if (r) {
-        fprintf(stderr, "Error writing image '%s'\n", outfname);
+        fprintf(stderr, "Error writing image '%s'\n", disp_fname);
     }
     else {
-        printf("Disparity image written to '%s'\n", outfname);
+        printf("Disparity image written to '%s'\n", disp_fname);
+    }
+
+    gt = ImagePGMRead(gt_fname);
+    if (gt==NULL) {
+        fprintf(stderr, "Can't read ground truth image'%s'\n", gt_fname);
+        ImageGrayDelete(disp);
+        ImageGrayDelete(img_l);
+        ImageGrayDelete(img_r);
+        ImageGrayDelete(template_l);
+        ImageGrayDelete(template_r);
+        return(-1);
+    }
+    comp = comp_ground_truth(disp, gt);
+    if (comp == NULL) {
+        ImageGrayDelete(gt);
+        ImageGrayDelete(disp);
+        ImageGrayDelete(img_l);
+        ImageGrayDelete(img_r);
+        ImageGrayDelete(template_l);
+        ImageGrayDelete(template_r);
+    }
+
+    r = ImagePGMBinWrite(comp, comp_fname);
+    if (r) {
+        fprintf(stderr, "Error writing image '%s'\n", comp_fname);
+    }
+    else {
+        printf("Compared Disparity / Ground-truth image written to '%s'\n", comp_fname);
     }
 
     // free memory
-    ImageGrayDelete(out);
+    ImageGrayDelete(gt);
+    ImageGrayDelete(disp);
+    ImageGrayDelete(comp);
     ImageGrayDelete(img_l);
     ImageGrayDelete(img_r);
     ImageGrayDelete(template_l);

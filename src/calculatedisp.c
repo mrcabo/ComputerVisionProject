@@ -184,3 +184,23 @@ ImageGray *create_disp_img(ImageGray *img_l, ImageGray *img_r, ImageGray *templa
     return (out);
 }
 
+ImageGray *comp_ground_truth(ImageGray *disp, ImageGray *gt) {
+
+    if ((disp->Height != gt->Height) || (disp->Width != gt->Width)) {
+        fprintf(stderr, "Disparity image and ground truth are not the same size\n");
+        return (NULL);
+    }
+
+    ImageGray *out;
+    out = ImageGrayCreate(gt->Width, gt->Height);
+    if (out==NULL) {
+        fprintf(stderr, "Can't create output image\n");
+        return(NULL);
+    }
+    ulong imgsize = gt->Height*gt->Width;
+    for (ulong p = 0; p < imgsize; ++p) {
+        out->Pixmap[p] = (ubyte) abs(((int) gt->Pixmap[p]) - ((int) disp->Pixmap[p]));
+    }
+
+    return (out);
+}
