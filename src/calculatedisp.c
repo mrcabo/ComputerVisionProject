@@ -123,16 +123,16 @@ int calc_disp(const MaxTree *mt_l, const MaxTree *mt_r, const ImageGray *img_l, 
 
                 double diff_value = fabs(value_l-value_r);
                 if (!disp_aux->is_set[idx_l] || (diff_value < disp_aux->attr_diff[idx_l])) {
-                    disp_aux->is_set[idx_l] = true;
-                    disp_aux->attr_diff[idx_l] = diff_value;
                     double disparity = (inertiadata_l->SumX / inertiadata_l->Area) - (inertiadata_r->SumX / inertiadata_r->Area);
-                    // TODO: Check if this makes worse/better results (looks better tho..)
-//                    if (disparity < 0)
-//                        disparity = col_l - col_r;
-//                    disp_aux->disparity[idx_l] = disparity;
-
-                    // disparities should be positive. If it found a wrong match to the right, set it to 0..
-                    disp_aux->disparity[idx_l] = (disparity > 0) ? disparity : 0;
+                    // Only update when disparity makes sense. Take parent's value otherwise
+                    if (disparity < 0) {
+                        disp_aux->disparity[idx_l] = disp_aux->disparity[node_l->Parent];
+                    }
+                    else {
+                        disp_aux->is_set[idx_l] = true;
+                        disp_aux->attr_diff[idx_l] = diff_value;
+                        disp_aux->disparity[idx_l] = disparity;
+                    }
                 }
             }
         }
@@ -199,7 +199,9 @@ ImageGray *comp_ground_truth(ImageGray *disp, ImageGray *gt) {
     }
     ulong imgsize = gt->Height*gt->Width;
     for (ulong p = 0; p < imgsize; ++p) {
-        out->Pixmap[p] = (ubyte) abs(((int) gt->Pixmap[p]) - ((int) disp->Pixmap[p]));
+        int gt_value = (int) gt->Pixmap[p];
+//        int gt_value = (int) (round((int) gt->Pixmap[p]) / 8.0); // For venus image
+        out->Pixmap[p] = (ubyte) abs(gt_value - ((int) disp->Pixmap[p]));
     }
 
     return (out);

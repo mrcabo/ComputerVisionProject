@@ -93,6 +93,9 @@ int main(int argc, char *argv[]) {
     char *img_l_fname = "src-images/left-img.pgm";
     char *img_r_fname = "src-images/right-img.pgm";
     char *gt_fname = "src-images/ground-truth.pgm";
+//    char *img_l_fname = "src-images/venus-im2.pgm";
+//    char *img_r_fname = "src-images/venus-im6.pgm";
+//    char *gt_fname = "src-images/venus-disp2.pgm";
     char *disp_fname = "disp.pgm";
     char *comp_fname = "comp.pgm";
 
