@@ -1,4 +1,5 @@
 # ComputerVisionProject
+Resulting images can be found in outputs folder.
 
 ## Requirements
 CMake
